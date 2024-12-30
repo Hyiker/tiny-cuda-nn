@@ -1,5 +1,5 @@
 # Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without modification, are permitted
 # provided that the following conditions are met:
 #     * Redistributions of source code must retain the above copyright notice, this list of
@@ -10,7 +10,7 @@
 #     * Neither the name of the NVIDIA CORPORATION nor the names of its contributors may be used
 #       to endorse or promote products derived from this software without specific prior written
 #       permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 # FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL NVIDIA CORPORATION BE LIABLE
@@ -32,6 +32,7 @@ project(
 option(TCNN_BUILD_BENCHMARK "Build tiny-cuda-nn example benchmark?" ON)
 option(TCNN_BUILD_EXAMPLES "Build tiny-cuda-nn example applications?" ON)
 option(TCNN_ALLOW_CUBLAS_CUSOLVER "Allows tiny-cuda-nn to use cuBLAS and cuSolver. Only required for the Shampoo optimizer." OFF)
+option(TCNN_USE_DEPSFMT "Use fmt from dependencies folder." OFF)
 set(TCNN_CUDA_ARCHITECTURES "" CACHE STRING "Build tiny-cuda-nn for a specific GPU architecture.")
 
 ###############################################################################
@@ -235,8 +236,10 @@ if (NOT MSVC)
 endif()
 
 set(BUILD_SHARED_LIBS OFF)
-add_subdirectory("dependencies/fmt")
 
+if(TCNN_USE_DEPSFMT)
+	add_subdirectory("dependencies/fmt")
+endif()
 ###############################################################################
 # tiny-cuda-nn library, samples, and benchmarks
 ###############################################################################
@@ -274,8 +277,13 @@ target_include_directories(tiny-cuda-nn PUBLIC
 	"dependencies"
 	"dependencies/cutlass/include"
 	"dependencies/cutlass/tools/util/include"
-	"dependencies/fmt/include"
 )
+
+if(TCNN_USE_DEPSFMT)
+	target_include_directories(tiny-cuda-nn PUBLIC
+		"dependencies/fmt/include"
+	)
+endif()
 target_link_libraries(tiny-cuda-nn PUBLIC ${CUDA_LIBRARIES} ${TCNN_LIBRARIES} fmt)
 
 if (TCNN_BUILD_EXAMPLES)
