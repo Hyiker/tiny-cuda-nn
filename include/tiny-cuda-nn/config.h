@@ -50,16 +50,35 @@ struct TrainableModel {
 	std::shared_ptr<Trainer<float, network_precision_t, network_precision_t>> trainer;
 };
 
-inline TrainableModel create_from_config(
-	uint32_t n_input_dims,
-	uint32_t n_output_dims,
-	json config
-) {
+inline TrainableModel create_from_config(uint32_t n_input_dims, uint32_t n_output_dims, json config) {
 	std::shared_ptr<Loss<network_precision_t>> loss{create_loss<network_precision_t>(config.value("loss", json::object()))};
-	std::shared_ptr<Optimizer<network_precision_t>> optimizer{create_optimizer<network_precision_t>(config.value("optimizer", json::object()))};
-	auto network = std::make_shared<NetworkWithInputEncoding<network_precision_t>>(n_input_dims, n_output_dims, config.value("encoding", json::object()), config.value("network", json::object()));
+	std::shared_ptr<Optimizer<network_precision_t>> optimizer{create_optimizer<network_precision_t>(config.value("optimizer", json::object()))
+	};
+	auto network = std::make_shared<NetworkWithInputEncoding<network_precision_t>>(
+		n_input_dims, n_output_dims, config.value("encoding", json::object()), config.value("network", json::object())
+	);
 	auto trainer = std::make_shared<Trainer<float, network_precision_t, network_precision_t>>(network, optimizer, loss);
 	return {loss, optimizer, network, trainer};
 }
 
+struct TrainableModelWithEncoding {
+	std::shared_ptr<Loss<network_precision_t>> loss;
+	std::shared_ptr<Optimizer<network_precision_t>> optimizer;
+	std::shared_ptr<Encoding<network_precision_t>> encoding;
+	std::shared_ptr<NetworkWithInputEncoding<network_precision_t>> network;
+	std::shared_ptr<Trainer<float, network_precision_t, network_precision_t>> trainer;
+};
+
+inline TrainableModelWithEncoding create_trainable_with_encoding(uint32_t n_input_dims, uint32_t n_output_dims, json config) {
+	std::shared_ptr<Loss<network_precision_t>> loss{create_loss<network_precision_t>(config.value("loss", json::object()))};
+	std::shared_ptr<Optimizer<network_precision_t>> optimizer{create_optimizer<network_precision_t>(config.value("optimizer", json::object()))
+	};
+	auto encoding = std::shared_ptr<Encoding<network_precision_t>>(create_encoding<network_precision_t>(n_input_dims, config.value("encoding", json::object())));
+	auto network = std::make_shared<NetworkWithInputEncoding<network_precision_t>>(
+		encoding, n_output_dims , config.value("network", json::object())
+	);
+	auto trainer = std::make_shared<Trainer<float, network_precision_t, network_precision_t>>(network, optimizer, loss);
+	return {loss, optimizer, encoding, network, trainer};
 }
+
+} // namespace tcnn
