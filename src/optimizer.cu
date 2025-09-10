@@ -32,6 +32,7 @@
 #include <tiny-cuda-nn/optimizers/adam.h>
 #include <tiny-cuda-nn/optimizers/average.h>
 #include <tiny-cuda-nn/optimizers/batched.h>
+#include <tiny-cuda-nn/optimizers/cadam.h>
 #include <tiny-cuda-nn/optimizers/composite.h>
 #include <tiny-cuda-nn/optimizers/ema.h>
 #include <tiny-cuda-nn/optimizers/dual_ema.h>
@@ -57,6 +58,8 @@ Optimizer<T>* create_optimizer(const json& optimizer) {
 		return new AverageOptimizer<T>{optimizer};
 	} else if (equals_case_insensitive(optimizer_type, "Batched")) {
 		return new BatchedOptimizer<T>{optimizer};
+	} else if (equals_case_insensitive(optimizer_type, "CAdam")) {
+		return new CAdamOptimizer<T>{optimizer};
 	} else if (equals_case_insensitive(optimizer_type, "Composite")) {
 		return new CompositeOptimizer<T>{optimizer};
 	} else if (equals_case_insensitive(optimizer_type, "Ema")) {
