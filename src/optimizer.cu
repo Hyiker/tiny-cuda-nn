@@ -40,6 +40,7 @@
 #include <tiny-cuda-nn/optimizers/lookahead.h>
 #include <tiny-cuda-nn/optimizers/novograd.h>
 #include <tiny-cuda-nn/optimizers/sgd.h>
+#include <tiny-cuda-nn/optimizers/tema.h>
 
 #ifdef TCNN_SHAMPOO
 #include <tiny-cuda-nn/optimizers/shampoo.h>
@@ -80,6 +81,8 @@ Optimizer<T>* create_optimizer(const json& optimizer) {
 #else
 		throw std::runtime_error{"Cannot create `ShampooOptimizer` because tiny-cuda-nn was not compiled with cuBLAS and cuSolver."};
 #endif
+	} else if (equals_case_insensitive(optimizer_type, "TEma")) {
+		return new TEmaOptimizer<T>{optimizer};
 	} else {
 		throw std::runtime_error{fmt::format("Invalid optimizer type: {}", optimizer_type)};
 	}
