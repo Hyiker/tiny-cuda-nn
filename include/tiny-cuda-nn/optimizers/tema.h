@@ -22,6 +22,7 @@ __global__ void tema_step_full_precision(
 	const float dema_network_debias_old,
 	const float dema_network_debias_new,
 	const uint32_t n_network_params,
+	const bool use_double_ema,
 	const T* __restrict__ weights,
 	T* __restrict__ weights_dema,
 	float* __restrict__ tmp,
@@ -51,7 +52,7 @@ __global__ void tema_step_full_precision(
 		const float debiased_ema2 = ema2_new * dema_network_debias_new;
 		const float debiased_ema3 = ema3_new * dema_network_debias_new;
 
-		const float tema_val = 3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3;
+		const float tema_val = use_double_ema ? (2.0f * debiased_ema1 - debiased_ema2) : (3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3);
 
 		weights_dema[i] = (T)tema_val;
 		tmp[i] = tema_val;
@@ -76,6 +77,7 @@ __global__ void tema_step_half_precision(
 	const float dema_network_debias_old,
 	const float dema_network_debias_new,
 	const uint32_t n_network_params,
+	const bool use_double_ema,
 	const T* __restrict__ weights,
 	T* __restrict__ weights_dema,
 	T* __restrict__ weights_tema
@@ -104,7 +106,7 @@ __global__ void tema_step_half_precision(
 		const float debiased_ema2 = ema2_new * dema_network_debias_new;
 		const float debiased_ema3 = ema3_new * dema_network_debias_new;
 
-		const float tema_val = 3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3;
+		const float tema_val = use_double_ema ? (2.0f * debiased_ema1 - debiased_ema2) : (3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3);
 
 		weights_dema[i] = (T)tema_val;
 		weights_tema[ema1_offset] = (T)debiased_ema1;
@@ -174,6 +176,7 @@ public:
 				dema_network_debias_old,
 				dema_network_debias_new,
 				m_n_network_params,
+				m_use_double_ema,
 				weights,
 				m_weights_dema.data(),
 				m_tmp.data(),
@@ -192,6 +195,7 @@ public:
 				dema_network_debias_old,
 				dema_network_debias_new,
 				m_n_network_params,
+				m_use_double_ema,
 				weights,
 				m_weights_dema.data(),
 				m_weights_tema.data()
@@ -240,6 +244,10 @@ public:
 			m_full_precision = params["full_precision"];
 		}
 
+		if (params.contains("use_double_ema")) {
+			m_use_double_ema = params["use_double_ema"];
+		}
+
 		if (params.contains("nested")) {
 			m_nested->update_hyperparams(params["nested"]);
 		}
@@ -252,6 +260,7 @@ public:
 			{"encoding_decay", m_dema_encoding_decay  },
 			{"network_decay",  m_dema_network_decay   },
 			{"full_precision", m_full_precision       },
+			{"use_double_ema", m_use_double_ema     },
 		};
 	}
 
@@ -260,12 +269,14 @@ public:
 		data["nested"] = m_nested->serialize();
 		data["weights_dema_binary"] = m_weights_dema;
 		data["weights_tema_binary"] = m_weights_tema;
+		data["use_double_ema"] = m_use_double_ema;
 		return data;
 	}
 
 	void deserialize(const json& data) override {
 		m_weights_dema = data["weights_dema_binary"];
 		m_weights_tema = data["weights_tema_binary"];
+		m_use_double_ema = data["use_double_ema"];
 
 		if (m_full_precision) {
 			m_tmp.resize(m_weights_dema.size());
@@ -283,6 +294,7 @@ private:
 	float m_dema_encoding_decay = 0.0f;
 	float m_dema_network_decay = 0.99f;
 	bool m_full_precision = false;
+	bool m_use_double_ema = false; ///< If true, use double Ema instead of Triple Ema
 	std::shared_ptr<Optimizer<T>> m_nested;
 
 	GPUMemory<T> m_weights_dema;
