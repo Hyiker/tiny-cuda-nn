@@ -52,7 +52,8 @@ __global__ void tema_step_full_precision(
 		const float debiased_ema2 = ema2_new * dema_network_debias_new;
 		const float debiased_ema3 = ema3_new * dema_network_debias_new;
 
-		const float tema_val = use_double_ema ? (2.0f * debiased_ema1 - debiased_ema2) : (3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3);
+		const float tema_val = use_double_ema ? (2.0f * debiased_ema1 - debiased_ema2) :
+												(3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3);
 
 		weights_dema[i] = (T)tema_val;
 		tmp[i] = tema_val;
@@ -106,7 +107,8 @@ __global__ void tema_step_half_precision(
 		const float debiased_ema2 = ema2_new * dema_network_debias_new;
 		const float debiased_ema3 = ema3_new * dema_network_debias_new;
 
-		const float tema_val = use_double_ema ? (2.0f * debiased_ema1 - debiased_ema2) : (3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3);
+		const float tema_val = use_double_ema ? (2.0f * debiased_ema1 - debiased_ema2) :
+												(3.0f * debiased_ema1 - 3.0f * debiased_ema2 + debiased_ema3);
 
 		weights_dema[i] = (T)tema_val;
 		weights_tema[ema1_offset] = (T)debiased_ema1;
@@ -148,8 +150,10 @@ public:
 
 	void step(cudaStream_t stream, float loss_scale, float* weights_full_precision, T* weights, const T* gradients) override {
 		m_nested->step(stream, loss_scale, weights_full_precision, weights, gradients);
+	}
 
-		uint32_t current_step = m_nested->step();
+	void step_ema(cudaStream_t stream, T* weights, int step_offset=0) {
+		uint32_t current_step = m_nested->step() + step_offset;
 
 		float dema_encoding_debias_old = 1 - (float)std::pow(m_dema_encoding_decay, current_step - 1);
 		float dema_encoding_debias_new = 1.0f / (1 - (float)std::pow(m_dema_encoding_decay, current_step));
@@ -255,12 +259,12 @@ public:
 
 	json hyperparams() const override {
 		return {
-			{"otype",          "TEMA"              },
+			{"otype",          "TEMA"                 },
 			{"nested",         m_nested->hyperparams()},
 			{"encoding_decay", m_dema_encoding_decay  },
 			{"network_decay",  m_dema_network_decay   },
 			{"full_precision", m_full_precision       },
-			{"use_double_ema", m_use_double_ema     },
+			{"use_double_ema", m_use_double_ema       },
 		};
 	}
 
