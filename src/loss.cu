@@ -33,6 +33,7 @@
 #include <tiny-cuda-nn/losses/smape.h>
 #include <tiny-cuda-nn/losses/l1.h>
 #include <tiny-cuda-nn/losses/l2.h>
+#include <tiny-cuda-nn/losses/huber.h>
 #include <tiny-cuda-nn/losses/relative_l1.h>
 #include <tiny-cuda-nn/losses/relative_l2.h>
 #include <tiny-cuda-nn/losses/relative_l2_luminance.h>
@@ -59,6 +60,7 @@ auto register_builtin_losses() {
 	register_loss<T>(factories, "RelativeL2Luminance", [](const json& loss) { return new RelativeL2LuminanceLoss<T>{}; });
 	register_loss<T>(factories, "L1", [](const json& loss) { return new L1Loss<T>{}; });
 	register_loss<T>(factories, "RelativeL1", [](const json& loss) { return new RelativeL1Loss<T>{}; });
+	register_loss<T>(factories, "Huber", [](const json& loss) { return new HuberLoss<T>{loss}; });
 	register_loss<T>(factories, "Mape", [](const json& loss) { return new MapeLoss<T>{}; });
 	register_loss<T>(factories, "Smape", [](const json& loss) { return new SmapeLoss<T>{}; });
 	register_loss<T>(factories, "CrossEntropy", [](const json& loss) { return new CrossEntropyLoss<T>{}; });
