@@ -170,6 +170,10 @@ public:
 		return m_encoding;
 	}
 
+	const std::shared_ptr<Network<T>>& network() const {
+		return m_network;
+	}
+
 	json hyperparams() const override {
 		return {
 			{"otype", "NetworkWithInputEncoding"},
