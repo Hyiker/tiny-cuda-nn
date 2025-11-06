@@ -91,8 +91,10 @@ public:
 
 	void step(cudaStream_t stream, float loss_scale, float* weights_full_precision, T* weights, const T* gradients) override {
 		m_nested->step(stream, loss_scale, weights_full_precision, weights, gradients);
+	}
 
-		uint32_t current_step = m_nested->step();
+	void step_ema(cudaStream_t stream, T* weights, int step_offset=0) {
+		uint32_t current_step = m_nested->step() + step_offset;
 
 		float dema_encoding_debias_old = 1 - (float)std::pow(m_dema_encoding_decay, current_step - 1);
 		float dema_encoding_debias_new = 1.0f / (1 - (float)std::pow(m_dema_encoding_decay, current_step));
@@ -141,6 +143,7 @@ public:
 			);
 		}
 	}
+
 
 	float learning_rate() const override { return m_nested->learning_rate(); }
 
